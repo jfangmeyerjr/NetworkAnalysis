@@ -1,0 +1,220 @@
+#Poisson Reg
+glm(model~vars, poisson, data)
+#Poisson Reg QMLE
+glm(model~vars, quasipoisson, data)
+#NBD Reg
+library(MASS)
+glm.nb
+#Negbin1: overdispersion constant across datapoints
+#Negbin2: overdispersion can increase as conditional mean Y|X increases.
+
+# Venga James
+# wd
+setwd('C:/Users/L03052618/Documents/1. Colaboración KM/Datos completos 28Oct/NegBin Reg/')
+Years00_02 <- read.csv('00-02.csv')
+
+#checar matriz de correlaciones
+class(Years00_02)
+# check variable types within Years00_02
+# escribir mi primer programa! El valor de funciones. Reciclaje
+col.class <- function (data) {for (column in c(1:length(data))){
+  print(class(data[,column]))
+}}
+col.class(Years00_02)
+# En lugar de cambiar las clases de los variables, checaré correlación en excel.
+# Work Smarter, not harder
+
+# Usar Degree como representativo de PageRank y Betweenness
+# Usar ClusteringCoSq por su naturaleza cuadrada
+
+prueba_seco <- lm(Years00_02$NumPublications ~ Years00_02$Grado + 
+                  Years00_02$ClusteringCoSq, 
+                  data = Years00_02)
+summary(prueba_seco)
+plot(prueba_seco)
+
+glm1 <- glm(Years00_02$NumPublications ~ Years00_02$Grado + 
+            Years00_02$ClusteringCoSq, 
+            data = Years00_02)
+summary(glm1)
+
+lmClusCo <- lm(Years00_02$NumPublications ~ Years00_02$Grado + 
+                Years00_02$Clustering.Coefficient, 
+               data = Years00_02)
+summary(lmClusCo)
+plot(lmClusCo)
+
+lmPageRank <- lm(Years00_02$NumPublications ~ Years00_02$PageRank + 
+                 Years00_02$ClusteringCoSq, 
+                 data = Years00_02)
+summary(lmPageRank)
+summary(Years00_02$ClusteringCoSq)
+plot(Years00_02$ClusteringCoSq)
+plot(Years00_02$Clustering.Coefficient)
+# Por la distribución, mejor pongo un dummy ClusCo=!1=!0
+Years00_02 <- read.csv('00-02.csv')
+summary(Years00_02$ClusteringCoDummy)
+plot(Years00_02$ClusteringCoDummy)
+
+lmDummy <- lm(Years00_02$NumPublications ~ Years00_02$Grado + 
+              Years00_02$ClusteringCoDummy, 
+              data = Years00_02)
+summary(lmDummy)
+plot(lmDummy)
+plot(Years00_02$ClusteringCoDummy,Years00_02$NumPublications)
+plot(Years00_02$ClusteringCoSq,Years00_02$NumPublications)
+
+ClusNon0 <- subset(Years00_02, Years00_02$Clustering.Coefficient>0)
+Clus0 <- subset(Years00_02, Years00_02$Clustering.Coefficient==0)
+Clus1 <- subset(Years00_02, Years00_02$Clustering.Coefficient==1)
+ClusMid <- subset(ClusNon0, Years00_02$Clustering.Coefficient<1)
+summary(Years00_02$NumPublications, data = Clus0)
+summary(Years00_02$NumPublications, data = Clus1)
+summary(Years00_02$NumPublications, data = ClusMid)
+
+glm2 <- glm(Years00_02$NumPublications ~ Years00_02$Grado + 
+              Years00_02$Clustering.Coefficient + 
+              Years00_02$ClusteringCoSq, 
+            data = Years00_02)
+summary(glm2)
+plot(glm2)
+
+# Poisson Reg
+Pois1 <- glm(Years00_02$NumPublications ~ Years00_02$Grado +
+    Years00_02$ClusteringCoSq, 
+    poisson, 
+    Years00_02)
+summary(Pois1)
+
+#Poisson Reg QMLE
+PoisQ1 <- glm(Years00_02$NumPublications ~ Years00_02$Grado +
+              Years00_02$ClusteringCoSq, 
+              quasipoisson, 
+              Years00_02)
+summary(PoisQ1)
+
+#NBD Reg
+library(MASS)
+NegBin1 <- glm.nb(Years00_02$NumPublications ~ Years00_02$Grado +
+                  Years00_02$ClusteringCoSq, 
+                  Years00_02)
+summary(NegBin1)
+plot(NegBin1)
+plot(Years00_02$Grado, Years00_02$NumPublications)
+lines(predict(NegBin1))
+
+plot(Years00_02$ClusteringCoSq, Years00_02$NumPublications)
+lines(predict(NegBin1))
+#Negbin1: overdispersion constant across datapoints
+#Negbin2: overdispersion can increase as conditional mean Y|X increases.
+
+Negbin2 <- glm.nb(Years00_02$NumPublications ~
+                    Years00_02$PageRank +
+                    Years00_02$ClusteringCoSq,
+                  Years00_02)
+summary(Negbin2)
+plot(Negbin2)
+
+Late_period03_11 <- read.csv('03-11 [Nodes] with vars.csv')
+
+Negbin3 <- glm.nb(Late_period03_11$NumPublications ~
+                    Late_period03_11$PageRank +
+                    Late_period03_11$ClusteringCoSq,
+                  Late_period03_11)
+summary(Negbin3)
+plot(Negbin3)
+
+Pois2 <- glm(Late_period03_11$NumPublications ~
+               Late_period03_11$PageRank +
+               Late_period03_11$ClusteringCoSq,
+             quasipoisson,
+             Late_period03_11)
+summary(Pois2)
+plot(Pois2)
+
+Full_period00_11 <- read.csv('00-11.csv')
+
+
+Negbin4 <- glm.nb(Full_period00_11$NumPublications ~
+                    Full_period00_11$PageRank +
+                    Full_period00_11$ClusSq,
+                  Full_period00_11)
+summary(Negbin4)
+plot(Negbin4)
+
+library(MASS)
+require(ggplot2)
+ggplot(Full_period00_11, aes(Full_period00_11$NumPublications))
+hist(Full_period00_11$NumPublications)
+
+# Zero truncated jawns
+require(foreign)
+require(ggplot2)
+require(VGAM)
+require(boot)
+
+ztnbreg1 <- vglm(Full_period00_11$NumPublications ~ 
+                   Full_period00_11$PageRank +
+                   Full_period00_11$ClusSq,
+                 family = posnegbinomial(),
+                 data = Full_period00_11)
+summary(ztnbreg1)
+warnings()
+
+ztpois1 <- vglm(Full_period00_11$NumPublications ~ 
+                  Full_period00_11$PageRank +
+                  Full_period00_11$ClusSq,
+                family = pospoisson(),
+                data = Full_period00_11)
+summary(ztpois1)
+
+# Normalized
+
+ztnbreg2 <- vglm(Full_period00_11$NumPublications ~ 
+                   Full_period00_11$PageRankNormalized +
+                   Full_period00_11$ClusSqNormalized,
+                 family = posnegbinomial(),
+                 data = Full_period00_11)
+summary(ztnbreg2)
+warnings()
+
+ztpois2 <- vglm(Full_period00_11$NumPublications ~ 
+                  Full_period00_11$PageRankNormalized +
+                  Full_period00_11$ClusSqNormalized,
+                family = pospoisson(),
+                data = Full_period00_11)
+summary(ztpois2)
+
+# 03-11 Normalized
+
+ztnbreg3 <- vglm(Late_period03_11$NumPublications ~ 
+                   Late_period03_11$PageRankNormalized +
+                   Late_period03_11$CCSqNormalized,
+                 family = posnegbinomial(),
+                 data = Late_period03_11)
+summary(ztnbreg3)
+warnings()
+
+ztpois3 <- vglm(Late_period03_11$NumPublications ~ 
+                  Late_period03_11$PageRankNormalized +
+                  Late_period03_11$CCSqNormalized,
+                family = pospoisson(),
+                data = Late_period03_11)
+summary(ztpois3)
+
+
+
+## various equivalent specifications of the LR test
+lrtest(fm2, fm1)
+lrtest(fm2, 2)
+lrtest(fm2, "con1")
+lrtest(fm2, . ~ . - con1)
+
+# Mi propio Log Ratio Test!!!!!!!!!
+lrtest(ztnbreg3,ztpois3)
+
+## change in deviance
+dLL <- 2 * (logLik(ztnbreg3) - logLik(ztpois3))
+
+## p-value, 1 df---the overdispersion parameter
+pchisq(dLL, df = 1, lower.tail = FALSE)
